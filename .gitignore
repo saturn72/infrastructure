@@ -173,5 +173,3 @@ target/
 postgres_data/
 keycloak_data/
 .next/
-webui/.env
-webui/.env.*

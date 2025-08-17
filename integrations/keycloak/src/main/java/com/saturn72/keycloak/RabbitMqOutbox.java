@@ -12,6 +12,26 @@ public class RabbitMqOutbox implements Outbox {
 
     public RabbitMqOutbox(RabbitMqSettings settings) {
         this.settings = settings;
+        // Ensure exchange and routing (queue) exist
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(settings.host);
+            factory.setUsername(settings.user);
+            factory.setPassword(settings.pass);
+            try (Connection connection = factory.newConnection();
+                    Channel channel = connection.createChannel()) {
+                // Declare exchange (type direct by default)
+                channel.exchangeDeclare(settings.exchange, "direct", true);
+                if (settings.routingKey != null && !settings.routingKey.isEmpty()) {
+                    // Declare a queue with the same name as routingKey, durable
+                    channel.queueDeclare(settings.routingKey, true, false, false, null);
+                    // Bind queue to exchange with routingKey
+                    channel.queueBind(settings.routingKey, settings.exchange, settings.routingKey);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to declare exchange/queue: " + e.getMessage());
+        }
     }
 
     @Override

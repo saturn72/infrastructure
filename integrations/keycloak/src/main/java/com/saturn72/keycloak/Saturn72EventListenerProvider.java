@@ -14,7 +14,10 @@ public class Saturn72EventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(Event event) {
         System.out.println("Keycloak Event: " + event.getType() + " User: " + event.getUserId());
-        if (event.getType() == EventType.REGISTER) {
+        EventType eventType = event.getType();
+        if (eventType == EventType.REGISTER ||
+                eventType == EventType.LOGIN ||
+                eventType == EventType.LOGOUT) {
             outbox.send(event);
         }
     }

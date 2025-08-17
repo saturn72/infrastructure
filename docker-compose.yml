@@ -19,6 +19,8 @@ services:
       - "5005:5005"
     volumes:
       - ./keycloak_data:/opt/keycloak/data
+    depends_on:
+      - rabbitmq
 
 
   rabbitmq:
