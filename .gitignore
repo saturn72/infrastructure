@@ -172,4 +172,5 @@ packages/
 target/
 postgres_data/
 keycloak_data/
+mongo_data/
 .next/
