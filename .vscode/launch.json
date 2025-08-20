@@ -1,6 +1,28 @@
 {
     "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "Debug All (user-activity-log & Keycloak)",
+            "configurations": [
+                "Attach to user-activity-log (Node.js)",
+                "Attach to Keycloak Docker Java"
+            ]
+        }
+    ],
     "configurations": [
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to user-activity-log (Node.js)",
+            "address": "localhost",
+            "port": 9229,
+            "restart": true,
+            "localRoot": "${workspaceFolder}/user-activity-log",
+            "remoteRoot": "/app",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
         {
             "type": "java",
             "name": "Attach to Keycloak Docker Java",

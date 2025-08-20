@@ -17,7 +17,11 @@ public class Saturn72EventListenerProvider implements EventListenerProvider {
         EventType eventType = event.getType();
         if (eventType == EventType.REGISTER ||
                 eventType == EventType.LOGIN ||
-                eventType == EventType.LOGOUT) {
+                eventType == EventType.LOGOUT ||
+                eventType == EventType.DELETE_ACCOUNT ||
+                eventType == EventType.IMPERSONATE ||
+                eventType == EventType.VERIFY_EMAIL ||
+                eventType == EventType.VERIFY_PROFILE) {
             outbox.send(event);
         }
     }

@@ -1,0 +1,38 @@
+{
+    "name": "lets-infrastructure-dev",
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "user-activity-log",
+    "workspaceFolder": "/workspaces/lets",
+    "shutdownAction": "stopCompose",
+    "forwardPorts": [
+        4000,
+        9229,
+        5005
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/sh"
+            },
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "ms-vscode.vscode-typescript-next",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode.js-debug-nightly",
+                "vscjava.vscode-java-debug"
+            ]
+        }
+    },
+    "postCreateCommand": "yarn install && yarn build",
+    "runServices": [
+        "user-activity-log",
+        "keycloak",
+        "rabbitmq",
+        "mongodb",
+        "postgres"
+    ],
+    "overrideCommand": false
+}

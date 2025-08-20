@@ -7,7 +7,6 @@ import { MongoClient } from 'mongodb';
 export class RabbitMqConsumer implements OnModuleInit {
   private channel: Channel;
   private connection: Connection;
-  private mongoClient: MongoClient;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -23,18 +22,18 @@ export class RabbitMqConsumer implements OnModuleInit {
     const q = await this.channel.assertQueue('', { exclusive: true });
     await this.channel.bindQueue(q.queue, exchange, routingKey);
 
-    this.mongoClient = new MongoClient(mongoUri);
-    await this.mongoClient.connect();
-    const db = this.mongoClient.db();
-    const collection = db.collection('user_activity');
-
     this.channel.consume(q.queue, async (msg) => {
       if (msg) {
+        const mongoClient = new MongoClient(mongoUri);
+        await mongoClient.connect();
+        const db = mongoClient.db();
+        const collection = db.collection('user_activity');
         const content = msg.content.toString();
         await collection.insertOne({
           message: content,
           receivedAt: new Date(),
         });
+        mongoClient.close();
         this.channel.ack(msg);
       }
     });

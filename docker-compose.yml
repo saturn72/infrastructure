@@ -1,57 +1,79 @@
-  version: '3.8'
-  services:
-    keycloak:
-      build:
-        context: ./integrations/keycloak
-      image: saturn72-keycloak-custom:latest
-      container_name: keycloak
-      environment:
-        - KEYCLOAK_ADMIN=admin
-        - KEYCLOAK_ADMIN_PASSWORD=admin
-        - KC_DB=dev-file
-        - KC_HTTP_RELATIVE_PATH=/auth
-        - JAVA_OPTS_APPEND=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-        - RABBITMQ_HOST=rabbitmq
-        - RABBITMQ_USER=guest
-        - RABBITMQ_PASS=guest
-      ports:
-        - "8080:8080"
-        - "5005:5005"
-      volumes:
-        - ./keycloak_data:/opt/keycloak/data
-      depends_on:
-        - rabbitmq
+version: '3.8'
+services:
+  keycloak:
+    build:
+      context: ./integrations/keycloak
+    image: saturn72-keycloak-custom:latest
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=dev-file
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - JAVA_OPTS_APPEND=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=from_keycloak
+      - RABBITMQ_ROUTING_KEY=user-activity
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - ./keycloak_data:/opt/keycloak/data
+    depends_on:
+      - rabbitmq
 
-    rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672"   # AMQP protocol
-        - "15672:15672" # Management UI
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
-    postgres:
-      image: postgres:16
-      container_name: postgres
-      environment:
-        POSTGRES_USER: keycloak
-        POSTGRES_PASSWORD: keycloak
-        POSTGRES_DB: keycloak
-      ports:
-        - "5432:5432"
-      volumes:
-        - ./postgres_data:/var/lib/postgresql/data
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
 
-    mongodb:
-      image: mongo:7
-      container_name: mongodb
-      ports:
-        - "27017:27017"
-      environment:
-        MONGO_INITDB_ROOT_USERNAME: root
-        MONGO_INITDB_ROOT_PASSWORD: example
-      volumes:
-        - ./mongo_data:/data/db
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - ./mongo_data:/data/db
+
+  user-activity-log:
+    build:
+      context: ./user-activity-log
+    container_name: user-activity-log
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=from_keycloak
+      - RABBITMQ_ROUTING_KEY=user-activity
+      - MONGODB_URI=mongodb://root:example@mongodb:27017/user-activity-log?authSource=admin
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      - rabbitmq
+      - mongodb
+    ports:
+      - "4000:3000"
+      - "9229:9229"
+    command: ["sh", "-c", "if [ \"$DEBUG\" = 'true' ]; then node --inspect-brk=0.0.0.0:9229 dist/main.js; else node dist/main.js; fi"]
 
